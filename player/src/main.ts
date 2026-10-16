@@ -9,7 +9,7 @@ const canvas=document.querySelector<HTMLCanvasElement>('#stage')!;
 const ctx=canvas.getContext('2d',{alpha:false})!;
 const W=1920,H=1080;
 const stateOutput=document.querySelector<HTMLOutputElement>('#state')!;
-const video=document.createElement('video');video.src='/scene/desk.mp4';video.preload='auto';video.muted=true;video.playsInline=true;
+const video=document.createElement('video');video.src='./scene/desk.mp4';video.preload='auto';video.muted=true;video.playsInline=true;
 const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});
 renderer.setSize(W,H);renderer.setPixelRatio(1);renderer.setClearColor(0,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
@@ -43,7 +43,7 @@ let guidedStart:number|null=null,guidedIndex=0,recording=false,recorder:MediaRec
 let latestMediaTime=config.videoStart,showTech=false,lastFootstep=0,talkingUntil=0;
 let audioContext:AudioContext|null=null,audioDestination:MediaStreamAudioDestinationNode|null=null;
 const buffers=new Map<string,AudioBuffer>();
-const samples:CameraSample[]=(await fetch('/scene/cameras.json').then(r=>r.json())).frames;
+const samples:CameraSample[]=(await fetch('./scene/cameras.json').then(r=>r.json())).frames;
 samples.forEach(s=>{s.matrix=new THREE.Matrix4().fromArray(s.c2w.flat()).transpose();});
 const cvFlip=new THREE.Matrix4().makeScale(1,-1,-1);
 let frameIndex=0;
@@ -62,7 +62,7 @@ async function initializeAudio(){
   audioDestination??=audioContext.createMediaStreamDestination();
   await Promise.all(['intro','message','permission','urgent','allow','later'].map(async id=>{
     if(buffers.has(id))return;
-    try{const r=await fetch('/audio/'+id+'.wav');if(r.ok)buffers.set(id,await audioContext!.decodeAudioData(await r.arrayBuffer()));}catch{ /* A missing voice asset never stops the live animation. */ }
+    try{const r=await fetch('./audio/'+id+'.wav');if(r.ok)buffers.set(id,await audioContext!.decodeAudioData(await r.arrayBuffer()));}catch{ /* A missing voice asset never stops the live animation. */ }
   }));
 }
 function speak(id:string){
@@ -79,14 +79,19 @@ function sound(frequency:number,volume=.035){
   pan.pan.value=THREE.MathUtils.clamp((avatar.root.position.x-.15)*3,-.7,.7);osc.connect(gain);gain.connect(pan);pan.connect(audioContext.destination);pan.connect(audioDestination);osc.start();osc.stop(audioContext.currentTime+.075);
 }
 function currentTime(){return started?(performance.now()-clockStart)/1000:0;}
+let startTask:Promise<void>|null=null;
 async function start(){
   if(started)return;
-  await initializeAudio();video.currentTime=config.videoStart;await video.play();
-  started=true;clockStart=performance.now();avatar.root.visible=true;document.querySelector<HTMLButtonElement>('#start')!.hidden=true;
-  speak('intro');setAction('idle');
+  if(startTask)return startTask;
+  startTask=(async()=>{
+    await initializeAudio();video.currentTime=config.videoStart;await video.play();
+    started=true;clockStart=performance.now();avatar.root.visible=true;document.querySelector<HTMLButtonElement>('#start')!.hidden=true;
+    speak('intro');setAction('idle');
+  })();
+  try{await startTask;}catch(error){startTask=null;stateOutput.value='Playback could not start — try Meet Bricki again';throw error;}
 }
 function setAction(action:string){
-  if(!started&&action!=='idle')void start();
+  if(!started&&action!=='idle'){void start().then(()=>setAction(action));return;}
   if((action==='allow'||action==='later')&&!card?.permission)return;
   from=avatar.root.position.clone();mode=action;modeStart=currentTime();
   captureState.mode=mode;captureState.events.push({time:modeStart,action});
