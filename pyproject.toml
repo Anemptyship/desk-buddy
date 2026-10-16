@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "desk-buddy-pipeline"
+version = "0.1.0"
+description = "Measured, timestamp-preserving matchmove preparation for DESK BUDDY"
+requires-python = ">=3.12,<3.14"
+dependencies = ["numpy>=1.26,<2", "opencv-python>=4.10,<4.12", "scipy>=1.13", "pillow>=10", "python-dotenv>=1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+geometry = ["torch>=2.7", "torchvision", "einops", "huggingface_hub", "omegaconf<2.4", "safetensors", "plyfile", "trimesh", "imageio", "evo", "e3nn", "moviepy==1.0.3", "pillow_heif", "addict", "hydra-core"]
+
+[project.scripts]
+desk-buddy = "desk_buddy.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["pipeline"]
+
+[tool.pytest.ini_options]
+testpaths = ["pipeline/tests"]
+pythonpath = ["pipeline"]

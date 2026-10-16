@@ -1,0 +1,29 @@
+{
+  "desk": {
+    "method": "SIFT tabletop texture triangulation with laptop-calibrated cameras; RANSAC",
+    "reference_frame": 30,
+    "reference_features": 216,
+    "triangulated_observations": 176,
+    "units": "meters",
+    "metric_accuracy_verified": false,
+    "normal": [
+      -0.01683978251114333,
+      -0.06712438374020638,
+      0.9976024954020888
+    ],
+    "offset": 0.008457732097193055,
+    "center": [
+      0.09508379412259049,
+      -0.040792924108218415,
+      -0.009617800295990901
+    ],
+    "inlier_ratio": 0.42613636363636365,
+    "inlier_rms_m": 0.0022701524423734075,
+    "ransac_threshold_m": 0.004,
+    "tilt_from_laptop_degrees": 3.9682969330414353,
+    "height_at_origin_m": -0.00847805828090288,
+    "reprojection_median_px": 0.2660242722499443,
+    "status": "estimated_candidate_requires_visual_review",
+    "physical_consistency_pass": true
+  }
+}

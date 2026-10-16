@@ -1,0 +1,11 @@
+{
+  "reference_frame": 30,
+  "analysis_image_size": [960, 540],
+  "laptop_corners_px": [[381, 241], [647, 241], [723, 385], [339, 385]],
+  "corner_order": ["back_left", "back_right", "front_right", "front_left"],
+  "laptop_width_m": 0.3126,
+  "laptop_depth_m": 0.2212,
+  "dimension_source": "User identified MacBook Pro 14-inch; Apple https://support.apple.com/en-ie/121552",
+  "annotation_source": "Human-reviewed image coordinates entered by Codex, not an Argon result",
+  "uncertainty": "Corners are approximate outer chassis bounds; keyboard/trackpad surface is not exactly planar; dimension verification and distortion calibration remain required."
+}
