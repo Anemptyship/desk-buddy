@@ -6,7 +6,7 @@
 
 A tiny **4 cm** companion that walks, explores, and gets your attention when it matters.
 
-**[▶ Play on Google Cloud](https://storage.googleapis.com/desk-buddy-h2gdm-2689-20261016/index.html?v=2)** · [Quick start](#run-locally) · [Controls](#try-it) · [Architecture](#how-it-works)
+**[▶ Play on Google Cloud](https://storage.googleapis.com/desk-buddy-h2gdm-2689-20261016/index.html?v=2)** · **[Watch the demo](https://youtu.be/JXPQdz6Ttgs)** · [Quick start](#run-locally) · [Controls](#try-it) · [Architecture](#how-it-works)
 
 ![Actual Desk Buddy gameplay: walking, climbing a coffee cup, and asking for permission](docs/media/desk-buddy-live.gif)
 
