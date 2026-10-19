@@ -5,7 +5,7 @@
     { "id": "laptop", "label": "MacBook", "shape": "box", "x": 0.1563, "y": 0.1106, "width": 0.3126, "depth": 0.2212, "height": 0.009, "top": 0 },
     { "id": "cup", "label": "Coffee cup", "shape": "cup", "x": -0.06339, "y": 0.21712, "radius": 0.03935, "bottomRadius": 0.0307, "base": 0.00506, "height": 0.11856 },
     { "id": "cap", "label": "Bottle cap", "shape": "cylinder", "x": -0.0444, "y": 0.0793, "radius": 0.017, "height": 0.014 },
-    { "id": "bottle", "label": "Water bottle", "shape": "cylinder", "x": -0.1173, "y": 0.0572, "radius": 0.033, "height": 0.16 },
+    { "id": "bottle", "label": "Water bottle", "shape": "cylinder", "x": -0.112, "y": 0.06, "radius": 0.033, "height": 0.16 },
     { "id": "wallet", "label": "Wallet", "shape": "box", "x": 0.3716, "y": 0.1039, "width": 0.084, "depth": 0.11, "height": 0.012, "rotation": -20 }
   ],
   "places": [
@@ -19,11 +19,11 @@
     { "id": "walletFront", "x": 0.345, "y": 0.03, "on": "desk" },
     { "id": "walletTop", "x": 0.36, "y": 0.074, "on": "wallet" },
     { "id": "capFront", "x": -0.04, "y": 0.038, "on": "desk" },
-    { "id": "capSeat", "x": -0.0444, "y": 0.068, "on": "cap", "seat": true },
+    { "id": "capSeat", "x": -0.0395, "y": 0.068, "on": "cap", "seat": true },
     { "id": "capSide", "x": -0.012, "y": 0.09, "on": "desk" },
     { "id": "cupFront", "x": -0.06339, "y": 0.14677, "on": "desk" },
     { "id": "cupRim", "x": -0.06339, "y": 0.17677, "on": "cup", "seat": true },
-    { "id": "bottleSide", "x": -0.074, "y": 0.035, "on": "desk", "face": -0.55 }
+    { "id": "bottleSide", "x": -0.066, "y": 0.035, "on": "desk", "face": -0.55 }
   ],
   "paths": [
     ["home", "edgeFront", "walk"], ["home", "palmFront", "walk"], ["home", "leftFront", "walk"],

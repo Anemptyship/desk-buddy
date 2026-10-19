@@ -282,7 +282,7 @@ def main(events_path: str, out_path: str) -> None:
         i = int(cut * SR)
         mix[i:i + int(0.05 * SR)] *= np.linspace(1, 0, int(0.05 * SR))[:, None]
         mix[i + int(0.05 * SR):int(marks.get("meet", cut + 4.7) * SR)] *= 0.0
-        add(kick() * 0.5 + snare() * 0.0, cut + 0.12, 0.25)
+        add(kick() * 0.5, cut + 0.12, 0.25)
         add(band(rng.normal(0, 1, int(0.9 * SR)), 300, 2000) * np.exp(-t_(0.9) * 5) * 0.03, marks.get("line2", cut + 2.3))
     peak = np.abs(mix).max()
     mix = np.tanh(mix / peak * 1.4) / np.tanh(1.4) * 0.89

@@ -84,7 +84,7 @@ function tick(now: number): void {
   stage.bricki.root.visible = started;
   if (started) stage.apply(brain.update(dt, clock), clock);
   stage.render();
-  placeCard(cam);
+  placeCard(cam, dt);
   requestAnimationFrame(tick);
 }
 
@@ -114,6 +114,7 @@ function respond(allow: boolean): void {
   if (!pending) return;
   pending = null;
   ui.cardActions.hidden = true;
+  tether.frozen = false;
   ui.cardLine.textContent = allow ? 'Thanks! Sending it now.' : 'Okay, I’ll keep it for later.';
   brain.command(answer(allow), true);
   setState(allow ? 'Allowed by you' : 'Deferred by you');
@@ -127,16 +128,60 @@ function showCard(event: AgentEvent, d: Decision): void {
   ui.cardBy.textContent = d.decidedBy === 'rules' ? 'rules' : `decided by ${ARGON_MODEL}`;
   ui.cardTitle.textContent = `${event.source} · ${event.title}`;
   ui.cardLine.textContent = `“${d.line}”`;
+  $('pill-tier').textContent = label(d.tier);
+  $('pill-text').textContent = event.title.length > 28 ? event.title.slice(0, 26) + '…' : event.title;
+  tether.fresh = true;
+  tether.frozen = false;
   ui.cardActions.hidden = d.tier !== 'needs_you';
   if (d.tier !== 'needs_you') window.setTimeout(() => !pending && (ui.card.hidden = true), 5200);
 }
 
-/** Keep the card above Bricki's head, in stage percentages so it survives resizing. */
-function placeCard(cam: ReturnType<typeof track.sample>): void {
-  if (ui.card.hidden) return;
-  const p = stage.toPlate(stage.bricki.headTop(new THREE.Vector3()), cam);
-  ui.card.style.left = `${THREE.MathUtils.clamp((p.x / 960) * 100, 16, 84)}%`;
-  ui.card.style.top = `${THREE.MathUtils.clamp((p.y / 540) * 100, 30, 100)}%`;
+/**
+ * The card is tethered above Bricki's head, but:
+ *  - it ignores jump height and follows with a little lag, so text never bounces;
+ *  - it collapses to a pill while Bricki moves and expands once Bricki stops;
+ *  - with buttons, it freezes once expanded so Allow/Later never move under the cursor;
+ *  - off-screen, it docks to the nearest edge; with no room above, it flips below.
+ */
+const tether = { x: 50, y: 50, stillFor: 0, frozen: false, fresh: true };
+const VIEW_SCALE = 1.06; // the stage video/canvas are scaled up slightly to hide undistortion borders
+
+function placeCard(cam: ReturnType<typeof track.sample>, dt: number): void {
+  if (ui.card.hidden) {
+    tether.fresh = true;
+    tether.frozen = false;
+    return;
+  }
+  const frame = brain.state;
+  const head = stage.bricki.headTop(new THREE.Vector3());
+  if (frame.ground !== null) head.z -= Math.max(0, frame.position.z - frame.ground);
+  const p = stage.toPlate(head, cam);
+  const tx = 50 + ((p.x / 960) * 100 - 50) * VIEW_SCALE;
+  const ty = 50 + ((p.y / 540) * 100 - 50) * VIEW_SCALE;
+
+  const moving = frame.pose.gait !== 'still' || frame.pose.airborne > 0.05 || frame.pose.hang;
+  tether.stillFor = moving ? 0 : tether.stillFor + dt;
+  const expanded = tether.stillFor >= 0.2 || tether.frozen;
+  ui.card.classList.toggle('compact', !expanded);
+  if (pending && expanded) tether.frozen = true;
+
+  if (tether.fresh) {
+    Object.assign(tether, { x: tx, y: ty, fresh: false });
+  } else if (!tether.frozen) {
+    const k = 1 - Math.exp(-dt / 0.12);
+    tether.x += (tx - tether.x) * k;
+    tether.y += (ty - tether.y) * k;
+  }
+
+  const docked = tether.x < 0 || tether.x > 100 || tether.y < 0 || tether.y > 100;
+  const x = THREE.MathUtils.clamp(tether.x, 14, 86);
+  const below = !docked && tether.y < 34;
+  const y = docked ? THREE.MathUtils.clamp(tether.y, 30, 96) : tether.y;
+  ui.card.classList.toggle('below', below);
+  ui.card.classList.toggle('docked', docked);
+  ui.card.style.setProperty('--dock-x', `${THREE.MathUtils.clamp(tether.x - x, -40, 40) * 3}px`);
+  ui.card.style.left = `${x}%`;
+  ui.card.style.top = `${y}%`;
 }
 
 const label = (t: Tier) => ({ fyi: 'FYI', needs_you: 'Needs you', urgent: 'Urgent', wellbeing: 'Wellbeing' })[t];

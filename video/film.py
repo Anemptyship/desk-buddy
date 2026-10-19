@@ -142,25 +142,25 @@ def build_shots() -> list[Shot]:
     # 5 · Agent events: urgency decides where Bricki goes.
     S.append(Shot("fyi", 5.6, plate=pingpong(*WIDE_E, 13.4, 0.45), zoom=2.3, frame_y=0.7,
                   sim={"start": "cupRim", "actions": [{"t": 1.0, "cmd": [gesture("wave", 2.6)]}]},
-                  titles=[{"t0": 0.0, "t1": 1.6, "text": "It knows what matters.", "size": 68, "pos": (W / 2, H / 2), "fin": 0.3}],
+                  titles=[{"t0": 0.0, "t1": 1.6, "text": "It knows what matters.", "size": 68, "pos": (W / 2, 140), "fin": 0.3}],
                   cards=[card(1.0, 5.4, "fyi", "Coding agent", "Build finished. 214 tests passed.", "Done! No rush.")],
                   chips=[{"t0": 1.3, "t1": 5.4, "name": "FYI", "verb": "stays on the cup, waves"}]))
     S.append(Shot("needs1", 3.4, plate=pingpong(*WIDE_C, 6.0, 0.45), zoom=1.9, frame_y=0.66,
                   sim={"start": "edgeSeat", "actions": NEEDS_ACTIONS},
-                  cards=[card(0.15, 3.4, "needs_you", "Email agent", "Send the weekly recap to the team?", "Can I go ahead?")],
+                  cards=[card(0.15, 3.4, "needs_you", "Email agent", "Send the weekly recap to the team?", "Can I go ahead?", short="Weekly recap \u00b7 Email agent")],
                   chips=[{"t0": 0.6, "t1": 3.4, "name": "Needs you", "verb": "comes to your hands"}]))
     S.append(Shot("needs2", 7.2, plate=pingpong(*WIDE_E, 14.0, 0.45), zoom=2.35, frame_y=0.74,
                   sim={"start": "edgeSeat", "actions": NEEDS_ACTIONS, "preroll": 3.4},
                   cards=[card(0.0, 7.0, "needs_you", "Email agent", "Send the weekly recap to the team?", "Can I go ahead?",
-                              buttons=True, press=NEEDS_PRESS - 3.4, after="Sending it now!")],
+                              buttons=True, press=NEEDS_PRESS - 3.4, after="Sending it now!", short="Weekly recap \u00b7 Email agent")],
                   keys=[{"t0": NEEDS_PRESS - 3.4 - 1.1, "t1": 7.0, "press": NEEDS_PRESS - 3.4}]))
     S.append(Shot("urgent", 6.2, plate=pingpong(*WIDE_E, 12.6, 0.45), zoom=2.2, frame_y=0.7,
                   sim={"start": "palmRest", "actions": [{"t": 0.6, "cmd": [goto("walletTop", True), gesture("wave", 3.4, True)]}]},
-                  cards=[card(0.5, 6.0, "urgent", "Calendar", "Standup starts in 1 minute.", "This one can’t wait!")],
+                  cards=[card(0.5, 6.0, "urgent", "Calendar", "Standup starts in 1 minute.", "This one can’t wait!", short="Standup in 1 min")],
                   chips=[{"t0": 0.9, "t1": 6.0, "name": "Urgent", "verb": "runs to the stage"}]))
     S.append(Shot("well", 5.2, plate=pingpong(*WIDE_C, 6.6, 0.45), zoom=2.5, frame_y=0.7,
                   sim={"start": "capSeat", "actions": [{"t": 0.7, "cmd": [goto("bottleSide"), gesture("point", 3)]}]},
-                  cards=[card(0.6, 5.0, "wellbeing", "Wellbeing", "No water in 2 hours.", "Water break?")],
+                  cards=[card(0.6, 5.0, "wellbeing", "Wellbeing", "No water in 2 hours.", "Water break?", short="Water break")],
                   chips=[{"t0": 1.0, "t1": 5.0, "name": "Wellbeing", "verb": "points at your bottle"}]))
 
     # 6 · How it works.
@@ -176,8 +176,8 @@ def build_shots() -> list[Shot]:
     S.append(Shot("end", 6.4, plate=pingpong(*WIDE_E, 14.6, 0.4), zoom=[(0, 2.4), (6.4, 1.9)], frame_y=0.72,
                   sim={"start": "cupRim", "actions": [{"t": 0.3, "cmd": [gesture("wave", 3.0)]}]},
                   titles=[{"t0": 1.4, "t1": 6.4, "text": "Desk Buddy", "size": 104, "weight": "Bold", "pos": (W / 2, 250),
-                           "sub": "Your AI agents, on your actual desk.", "sub_size": 40, "fout": 0.01},
-                          {"t0": 2.4, "t1": 6.4, "text": "Google DeepMind Hackathon  ·  Team pico banana", "size": 28, "weight": "Medium",
+                           "sub": "Your AI agents, on your actual desk.", "sub_size": 46, "fout": 0.01},
+                          {"t0": 2.4, "t1": 6.4, "text": "Google DeepMind Hackathon  ·  Team pico banana", "size": 32, "weight": "Medium",
                            "color": (210, 225, 215), "pos": (W / 2, H - 80), "fout": 0.01}],
                   dim=0.0))
     return S
@@ -269,6 +269,8 @@ _rng = np.random.default_rng(7)
 GRAIN = [(_rng.normal(0, 1, (H // 2, W // 2)).astype(np.float32)) for _ in range(6)]
 yy, xx = np.mgrid[0:H, 0:W]
 VIGNETTE = (1 - 0.2 * (((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2) ** 1.4).clip(0.7, 1)[..., None].astype(np.float32)
+VIG16 = (VIGNETTE * 256).astype(np.uint16)
+GRAIN16 = [np.repeat(np.repeat((gr * 5.6).astype(np.int16), 2, 0), 2, 1)[..., None] for gr in GRAIN]
 DRINK = np.array([0.448, 0.055])   # bottle with a non-English label, kept out of focus
 PLATE_FRAMES = len(os.listdir(PLATE60)) if PLATE60.exists() else 0
 
@@ -285,14 +287,22 @@ def to_out(p, crop) -> tuple[float, float]:
     return ((p[0] - crop["x"]) * s, (p[1] - crop["y"]) * s)
 
 
-def grade(img: Image.Image) -> np.ndarray:
-    a = np.asarray(img).astype(np.float32) / 255
-    a = a ** 0.96
-    a = a + 0.06 * (a - a * a) * 2 - 0.015            # gentle S-curve
-    a *= np.array([1.02, 1.0, 0.965], np.float32)     # a touch warmer
-    lum = a.mean(2, keepdims=True)
-    a = lum + (a - lum) * 1.06
-    return a
+def _lut(gain: float, dim: float = 0.0) -> list[int]:
+    x = np.arange(256) / 255
+    y = x ** 0.96
+    y = y + 0.12 * (y - y * y) - 0.015                # gentle S-curve
+    y = (y * gain * (1 - dim)).clip(0, 1)
+    return [int(v) for v in (y * 255).round()]
+
+
+_LUTS: dict = {}
+
+
+def grade(img: Image.Image, dim: float = 0.0) -> Image.Image:
+    from PIL import ImageEnhance
+    if dim not in _LUTS:
+        _LUTS[dim] = _lut(1.02, dim) + _lut(1.0, dim) + _lut(0.965, dim)   # a touch warmer
+    return ImageEnhance.Color(img.point(_LUTS[dim])).enhance(1.06)
 
 
 def blur_label(img: Image.Image, t: float, crop: dict) -> None:
@@ -308,9 +318,12 @@ def blur_label(img: Image.Image, t: float, crop: dict) -> None:
     s = W / crop["width"]
     mask = Image.new("L", (W, H), 0)
     ImageDraw.Draw(mask).polygon([tuple(p) for p in _hull(out)], fill=255)
-    mask = mask.filter(ImageFilter.GaussianBlur(6 * s))
-    blurred = img.filter(ImageFilter.GaussianBlur(9 * s))
-    img.paste(blurred, (0, 0), mask)
+    pad = int(30 * s)
+    box = (max(0, int(x0) - pad), max(0, int(y0) - pad), min(W, int(x1) + pad), min(H, int(y1) + pad))
+    if box[2] - box[0] < 4 or box[3] - box[1] < 4:
+        return
+    m = mask.crop(box).filter(ImageFilter.GaussianBlur(6 * s))
+    img.paste(img.crop(box).filter(ImageFilter.GaussianBlur(9 * s)), box[:2], m)
 
 
 def _hull(points: np.ndarray) -> list:
@@ -331,12 +344,18 @@ def _hull(points: np.ndarray) -> list:
 def bricki_layer(path: Path) -> Image.Image:
     """Soften the CG slightly and match it to the plate's softness and warmth."""
     im = Image.open(path).convert("RGBA")
-    pm = im.convert("RGBa").filter(ImageFilter.GaussianBlur(1.1)).convert("RGBA")
+    out = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    box = im.getchannel("A").getbbox()
+    if not box:
+        return out
+    box = (max(0, box[0] - 8), max(0, box[1] - 8), min(W, box[2] + 8), min(H, box[3] + 8))
+    pm = im.crop(box).convert("RGBa").filter(ImageFilter.GaussianBlur(1.1)).convert("RGBA")
     a = np.asarray(pm).astype(np.float32)
     a[..., :3] *= np.array([1.0, 0.98, 0.94], np.float32)
     lum = a[..., :3].mean(2, keepdims=True)
     a[..., :3] = lum + (a[..., :3] - lum) * 0.9
-    return Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA")
+    out.paste(Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA"), box[:2])
+    return out
 
 
 def draw_overlay(base: Image.Image, kind: str, t: float, pt: float, crop: dict) -> None:
@@ -362,20 +381,22 @@ def draw_overlay(base: Image.Image, kind: str, t: float, pt: float, crop: dict) 
     elif kind == "grid":
         p = g.ease(t / 1.4)
         for v in np.arange(-0.2, 0.55, 0.05):
-            a = int(150 * p * (1 - abs(v - 0.15) / 0.5))
+            a = int(230 * p * (1 - abs(v - 0.15) / 0.6))
             if a <= 0:
                 continue
-            g.draw_polyline(d, proj([(v, y, desk_z(v, y)) for y in np.linspace(-0.12, 0.3, 30)]), teal + (a,), 2, p)
+            g.draw_polyline(d, proj([(v, y, desk_z(v, y)) for y in np.linspace(-0.12, 0.3, 30)]), teal + (a,), 3, p)
         for v in np.arange(-0.12, 0.32, 0.05):
-            a = int(150 * p)
-            g.draw_polyline(d, proj([(x, v, desk_z(x, v)) for x in np.linspace(-0.2, 0.5, 40)]), teal + (a,), 2, p)
+            a = int(210 * p)
+            g.draw_polyline(d, proj([(x, v, desk_z(x, v)) for x in np.linspace(-0.2, 0.5, 40)]), teal + (a,), 3, p)
     elif kind == "laptop":
         p = g.ease(t / 0.9)
         lap = objs["laptop"]
-        g.draw_polyline(d, proj(outline(lap)[1]), (255, 210, 120, 255), 5, p)
+        ring = proj(outline(lap)[1])
+        d.polygon([tuple(q) for q in ring], fill=(255, 210, 120, int(60 * p)))
+        g.draw_polyline(d, ring, (255, 214, 130, 255), 8, p)
         a = g.ease((t - 0.7) / 0.4)
         x0, x1 = proj([(0, -0.02, desk_z(0, -0.02)), (lap["width"], -0.02, desk_z(lap["width"], -0.02))])
-        d.line([tuple(x0), tuple(x1)], fill=(255, 210, 120, int(255 * a)), width=3)
+        d.line([tuple(x0), tuple(x1)], fill=(255, 214, 130, int(255 * a)), width=5)
         m = (x0 + x1) / 2
         g.label_tag(d, m[0], m[1] + 40, "31.26 cm", "known width", a)
     elif kind == "graph":
@@ -408,8 +429,10 @@ def cold_open(base: Image.Image, t: float, events: list) -> None:
         t0 = times[k]
         if t < t0:
             break
-        x = W / 2 + rng.uniform(-620, 620) * min(1, k / 3)
-        y = 160 + (k * 137) % 760 + rng.uniform(-30, 30)
+        # first ones near the middle, then spreading over the whole screen
+        col, row = [(1, 1), (2, 2), (1, 2), (2, 1), (0, 0), (3, 3), (3, 0), (0, 3), (1, 0), (2, 3), (0, 1), (3, 2), (3, 1), (0, 2)][k]
+        x = 300 + col * 440 + rng.uniform(-60, 60)
+        y = 170 + row * 245 + rng.uniform(-40, 40)
         a = g.ease((t - t0) / 0.18)
         g.paste_center(base, g.notification_stack_image(k, src, title), x, y + (1 - a) * -40, 0.9 + 0.1 * a, a)
     if not events:
@@ -423,6 +446,7 @@ def compose_shot(shot: Shot, writer, audio_events: list, t_offset: float) -> Non
     pts = json.loads((d / "plate_times.json").read_text()) if (d / "plate_times.json").exists() else None
     meta = json.loads((d / "meta.json").read_text()) if (d / "meta.json").exists() else None
     stack_times: list = []
+    tracks = [card_track(c, meta, crops) for c in shot.cards] if meta else []
     for i in range(n):
         t = i / FPS
         if shot.plate:
@@ -431,10 +455,7 @@ def compose_shot(shot: Shot, writer, audio_events: list, t_offset: float) -> Non
             blur_label(img, pt, crop)
             if shot.blur:
                 img = img.filter(ImageFilter.GaussianBlur(shot.blur))
-            rgb = grade(img)
-            if shot.dim:
-                rgb *= 1 - shot.dim
-            frame = Image.fromarray((rgb.clip(0, 1) * 255).astype(np.uint8)).convert("RGBA")
+            frame = grade(img, shot.dim).convert("RGBA")
             if shot.sim:
                 frame.alpha_composite(bricki_layer(d / "bricki" / f"{i:05d}.png"))
         else:
@@ -443,12 +464,10 @@ def compose_shot(shot: Shot, writer, audio_events: list, t_offset: float) -> Non
             draw_overlay(frame, shot.overlay, t, pt, crop)
         if shot.cold_open:
             cold_open(frame, t, stack_times)
-        head = None
-        if meta:
-            head = to_out((meta[i]["head"]["x"], meta[i]["head"]["y"]), crop)
-        for c in shot.cards:
-            if head:
-                g.draw_card(frame, c, t, head)
+        for k, c in enumerate(shot.cards):
+            if tracks:
+                anchor, expand = tracks[k][i]
+                g.draw_card(frame, c, t, anchor, expand)
         for c in shot.chips:
             g.draw_chip(frame, c, t)
         for k in shot.keys:
@@ -457,13 +476,11 @@ def compose_shot(shot: Shot, writer, audio_events: list, t_offset: float) -> Non
             g.draw_title(frame, ti, t)
 
         # finishing: grain + vignette over everything that is "filmed"
-        a = np.asarray(frame.convert("RGB")).astype(np.float32) / 255
+        a = np.asarray(frame.convert("RGB"))
         if shot.plate:
-            gr = GRAIN[(i + int(t_offset * FPS)) % len(GRAIN)]
-            gr = np.repeat(np.repeat(gr, 2, 0), 2, 1)[..., None]
-            a = a * VIGNETTE + gr * 0.022
-        # shot-level fades: fade from black at film start, to black at the end
-        writer.stdin.write((a.clip(0, 1) * 255).astype(np.uint8).tobytes())
+            a = (a.astype(np.uint16) * VIG16 >> 8).astype(np.int16) + GRAIN16[(i + int(t_offset * FPS)) % len(GRAIN16)]
+            a = a.clip(0, 255).astype(np.uint8)
+        writer.stdin.write(a.tobytes())
 
     # audio cues
     for c in shot.cards:
@@ -482,6 +499,41 @@ def compose_shot(shot: Shot, writer, audio_events: list, t_offset: float) -> Non
         audio_events.extend((t_offset + tt, name) for tt, name in body_sounds(meta))
     if shot.overlay:
         audio_events.append((t_offset + 0.3, "scan"))
+
+
+def card_track(card: dict, meta: list, crops: list) -> list[tuple[tuple[float, float], float]]:
+    """Where a card sits each frame, and how expanded it is.
+
+    The card is tethered above Bricki's head but ignores jump height, follows with a
+    little lag, collapses to a pill while Bricki moves, expands once it stops, and
+    freezes in place when it has buttons so they never move under the user's finger.
+    """
+    dt = 1 / FPS
+    out, pos, expand, still_for, frozen = [], None, 0.0, 0.0, None
+    for i, m in enumerate(meta):
+        crop = crops[i]
+        s = W / crop["width"]
+        lift_px = max(0.0, m["lift"]) * 100 * m["pxPerCm"] * s
+        hx, hy = to_out((m["head"]["x"], m["head"]["y"]), crop)
+        target = np.array([hx, hy + lift_px - 12])
+        # bouncing in place (urgent, celebrate) is not travel: keep the card open
+        moving = m["gait"] != "still" or m["hang"] or (m["airborne"] > 0.05 and m["gesture"] == "none")
+        still_for = 0.0 if moving else still_for + dt
+        t = i * dt
+        if pos is None or t < card["t0"]:
+            pos = target.copy()
+            expand = 0.0 if moving else 1.0
+        else:
+            pos += (target - pos) * (1 - math.exp(-dt / 0.12))
+            goal = 1.0 if still_for >= 0.2 else 0.0
+            expand += (goal - expand) * (1 - math.exp(-dt / 0.09))
+        if card.get("buttons") and frozen is None and t >= card["t0"] + 0.2 and expand > 0.97:
+            frozen = pos.copy()
+        if frozen is not None:
+            out.append(((float(frozen[0]), float(frozen[1])), 1.0))
+        else:
+            out.append(((float(pos[0]), float(pos[1])), float(np.clip(expand, 0, 1))))
+    return out
 
 
 def body_sounds(meta: list) -> list[tuple[float, str]]:
@@ -529,7 +581,7 @@ def compose_all(out: Path) -> None:
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-i", str(WORK / "audio.wav"),
                     "-vf", f"fade=t=in:st=0:d=0.4,fade=t=out:st={t - 1.0:.2f}:d=1.0",
                     "-af", f"afade=t=out:st={t - 1.2:.2f}:d=1.2",
-                    "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+                    "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
                     "-movflags", "+faststart", str(out)], check=True)
     print("wrote", out)
 

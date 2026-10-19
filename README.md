@@ -39,17 +39,17 @@ Bricki is an original, pocket-sized block-toy companion for an AR desk experienc
 
 | Key | What happens |
 | --- | --- |
-| `1` | Walk across the desk |
-| `2` | Sit on the laptop edge |
-| `3` | Climb the cup and settle on its rim |
-| `4` | Bring over a message |
-| `5` | Ask for permission |
-| `6` | Deliver an urgent reminder |
+| `1` | Climb the coffee cup and sit on its rim |
+| `2` | Hop onto the bottle cap and drum on it |
+| `3` | Sit on the MacBook's front edge |
+| `4` | Stand on the wallet like a stage |
+| `5` | Walk to the water bottle and point at it |
+| `Q` `W` `E` `R` | Agent events: build finished · send the recap? · standup in 1 min · no water in 2 h |
 | `Enter` / `Backspace` | Allow / Later |
-| `-` / `+` | Switch to 2.5 cm / 4 cm |
-| `G` / `F1` | Inspect surface proxies / implementation information |
+| `G` | Show the desk map (object proxies and places) |
 
-**Guided live demo** plays the interaction sequence. **Record live demo** captures 68 seconds of the actual rendered canvas with audio and downloads WebM.
+Type any agent event into the box to see how Bricki reacts. With a Gemini API key in the panel,
+**Gemini 4 Argon** decides the urgency, which object to use and what to say; without one, keyword rules do.
 
 ## Run locally
 
@@ -75,37 +75,44 @@ The checked-in runtime assets are ready to use. AI credentials are only needed w
 
 ```mermaid
 flowchart LR
-    A[Real desk footage] --> B[Python scene preparation]
-    B --> C[Rectified video and timed cameras]
-    C --> D[Three.js player]
-    E[Keyboard and demo controls] --> D
-    D --> F[Procedural Bricki animation]
-    F --> G[Shadows, object proxies, and notification cards]
-    G --> H[Live canvas and recording]
+    A[Real desk footage] --> B[Tracked cameras + desk plane]
+    B --> C[Desk map: objects, places, paths]
+    E[Agent event] --> F[Gemini 4 Argon: urgency + which object]
+    F --> G[Brain: route over the place graph]
+    C --> G
+    G --> H[Bricki: walk · hop · climb · sit · gesture]
+    H --> I[Three.js over the footage, depth-only object proxies]
 ```
 
-A 14-inch MacBook Pro provides a metric scale anchor. The player synchronizes **506 camera samples** to video timestamps and renders a jointed character, surface shadows, and depth-writing laptop/cup proxies. Notifications and permission choices drive the animation state machine.
+The desk is a graph of places on real objects (cup rim, bottle-cap seat, laptop edge and palm rest,
+wallet top, beside the water bottle) joined by how you get between them: walk, hop, climb, drop.
+Bricki always leaves an object the way it got on, so an interruption never sends it through the cup.
+Notifications ride on Bricki: a compact pill while it walks, a full card once it stops, and a card
+with buttons freezes in place so Allow and Later never move under the cursor.
+
+`desk-buddy perceive` asks Gemini 4 Argon to find the objects and what each affords in a few frames
+of the take, raycasts its points onto the desk plane, and writes the map. The checked-in map is
+hand-placed from raycast frame points and is labelled as such.
 
 | Part | Implementation |
 | --- | --- |
-| Player | TypeScript, Vite, Three.js, Web Audio, MediaRecorder |
+| Player | TypeScript, Vite, Three.js (`src/behavior`, `src/scene`, `src/character`, `src/render`, `src/agent`) |
+| Desk understanding and decisions | Gemini 4 Argon (`pipeline/desk_buddy/perceive.py`, `player/src/agent/argon.ts`) |
 | Scene preparation | Python, OpenCV, NumPy, SciPy, FFmpeg |
 | Character design | Original Bricki reference developed with Nano Banana |
-| Character motion | Procedural geometry and joint animation in code |
-| Voice cues | Cached macOS system speech |
-| Deployment | Public static app on **Google Cloud Storage**, served over HTTPS |
-
-Omni was explored for separate concept clips. The playable character and GIFs on this page come from the real-time player.
+| Demo film | `video/`: frame-exact offline render of the same player, compositing, synthesized sound |
+| Deployment | Static app on **Google Cloud Storage** |
 
 ## Repository guide
 
 ```text
-player/src/              Character, animation states, UI, and scene configuration
+player/src/              Brain, place graph, character, stage, Argon agent, live UI, offline renderer
 player/public/scene/     Rectified desk video and synchronized scene data
 player/public/audio/     Cached voice cues
 pipeline/desk_buddy/     Offline camera and surface preparation
 pipeline/tests/          Geometry and timestamp checks
 docs/media/              Gameplay GIFs from the live recording
+video/                   Demo film pipeline (see video/README.md)
 scripts/deploy_gcs.py    Google Cloud Storage deployment helper
 ```
 

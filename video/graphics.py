@@ -125,25 +125,54 @@ def paste_center(base: Image.Image, el: Image.Image, cx: float, cy: float, scale
     base.alpha_composite(el, (int(cx - el.width / 2), int(cy - el.height / 2)))
 
 
-def draw_card(base: Image.Image, card: dict, t: float, head_xy: tuple[float, float]) -> None:
+@lru_cache(32)
+def pill_image(tier: str, text: str) -> Image.Image:
+    """Compact form of a card, shown while Bricki is on the move."""
+    label, color = TIER[tier]
+    probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    fb, fr = font("Bold", 21), font("SemiBold", 23)
+    w = int(probe.textlength(label, font=fb) + probe.textlength("  " + text, font=fr)) + 72
+    img = Image.new("RGBA", (w, 70), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((0, 0, w - 1, 51), 26, fill=GLASS + (236,), outline=(255, 255, 255, 40), width=2)
+    d.polygon([(w / 2 - 11, 50), (w / 2 + 11, 50), (w / 2, 62)], fill=GLASS + (236,))
+    d.ellipse((22, 19, 34, 31), fill=color)
+    d.text((44, 26), label, font=fb, fill=color, anchor="lm")
+    d.text((44 + probe.textlength(label, font=fb), 26), "  " + text, font=fr, fill=INK, anchor="lm")
+    return shadowed(img, 14, 0.45, (0, 6))
+
+
+SHADOW_PAD = 57
+
+
+def draw_card(base: Image.Image, card: dict, t: float, anchor: tuple[float, float], expand: float) -> None:
+    """Draw a tethered card. anchor = point just above Bricki's head (smoothed, maybe frozen);
+    expand = 0 for the compact pill (moving), 1 for the full card (Bricki has stopped)."""
     t0, t1 = card["t0"], card["t1"]
     if not (t0 <= t <= t1):
         return
     pressed = card.get("press") is not None and t >= card["press"]
     line = card["after"] if pressed and card.get("after") else card["line"]
     buttons = card.get("buttons", False) and not (pressed and t > card["press"] + 0.35)
-    img = card_image(card["tier"], card["source"], card["title"], line, buttons, pressed)
     a_in = ease_back((t - t0) / 0.35)
     a_out = ease((t1 - t) / 0.25)
-    scale = 0.8 + 0.2 * min(1, a_in)
     alpha = min(1.0, (t - t0) / 0.18, a_out)
-    # keep the pointer just above the head, but inside the frame
-    pad = 57  # shadow padding inside the image
-    cx = float(np.clip(head_xy[0], img.width / 2 - pad + 40, W - img.width / 2 + pad - 40))
-    bottom = head_xy[1] - 26
-    cy = bottom - (img.height - 2 * pad) / 2 - 8
-    cy = float(np.clip(cy, img.height / 2 - pad + 30, H - img.height / 2))
-    paste_center(base, img, cx, cy + (1 - min(1, a_in)) * 30, scale, alpha)
+    pop = 0.8 + 0.2 * min(1, a_in)
+    rise = (1 - min(1, a_in)) * 24
+    ax, ay = anchor
+    layers = []
+    if expand > 0.01:
+        layers.append((card_image(card["tier"], card["source"], card["title"], line, buttons, pressed), expand))
+    if expand < 0.99:
+        short = card.get("short") or card["source"]
+        layers.append((pill_image(card["tier"], short), 1 - expand))
+    for img, weight in layers:
+        body_h = img.height - 2 * SHADOW_PAD
+        cx = float(np.clip(ax, img.width / 2 - SHADOW_PAD + 36, W - img.width / 2 + SHADOW_PAD - 36))
+        cy = ay - body_h / 2
+        # no room above: keep it on screen (the pointer still aims down at Bricki)
+        cy = float(np.clip(cy, body_h / 2 + 28, H - body_h / 2 - 28))
+        paste_center(base, img, cx, cy + rise, pop * (0.94 + 0.06 * weight), alpha * weight)
 
 
 @lru_cache(32)
@@ -197,8 +226,27 @@ def draw_title(base: Image.Image, title: dict, t: float) -> None:
         return
     img = title_image(title["text"], title.get("size", 76), title.get("weight", "SemiBold"), tuple(title.get("color", (255, 255, 255))), title.get("sub"), title.get("sub_size", 34))
     x, y = title.get("pos", (W / 2, H / 2))
+    if y < H / 2 and title.get("scrim", True):
+        base.alpha_composite(_scrim(), (0, 0)) if a > 0.99 else base.alpha_composite(_faded(_scrim(), a), (0, 0))
     rise = (1 - ease((t - title["t0"]) / 0.6)) * 26
     paste_center(base, img, x, y + rise, 1.0, a)
+
+
+@lru_cache(1)
+def _scrim() -> Image.Image:
+    """Dark gradient at the top of frame so titles stay readable over a bright laptop screen."""
+    h = 430
+    g = np.linspace(0.62, 0, h) ** 1.6
+    a = (np.repeat(g[:, None], W, 1) * 255).astype(np.uint8)
+    img = Image.new("RGBA", (W, h), (6, 10, 8, 0))
+    img.putalpha(Image.fromarray(a))
+    return img
+
+
+def _faded(img: Image.Image, a: float) -> Image.Image:
+    out = img.copy()
+    out.putalpha(img.getchannel("A").point(lambda v: int(v * a)))
+    return out
 
 
 @lru_cache(4)
@@ -224,6 +272,7 @@ def draw_key(base: Image.Image, key: dict, t: float) -> None:
         d.text((W - 250, H - 62), "You approve.", font=font("Medium", 26), fill=(230, 240, 232, int(255 * b)), anchor="mm")
 
 
+@lru_cache(32)
 def notification_stack_image(i: int, source: str, title: str) -> Image.Image:
     """Generic OS-style notification used in the cold open."""
     w, h = 520, 116
@@ -260,6 +309,7 @@ def label_tag(d: ImageDraw.ImageDraw, x: float, y: float, name: str, verb: str, 
     fb, fr = font("Bold", 24), font("Medium", 24)
     a = int(255 * alpha)
     w = d.textlength(name, font=fb) + d.textlength("  " + verb, font=fr) + 36
+    x = min(max(x, w / 2 + 16), W - w / 2 - 16)
     d.rounded_rectangle((x - w / 2, y - 22, x + w / 2, y + 22), 22, fill=GLASS + (int(220 * alpha),))
     d.text((x - w / 2 + 18, y), name, font=fb, fill=INK + (a,), anchor="lm")
     d.text((x - w / 2 + 18 + d.textlength(name, font=fb), y), "  " + verb, font=fr, fill=ACCENT + (a,), anchor="lm")
