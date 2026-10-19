@@ -20,3 +20,5 @@ submission/*.mp4
 submission/*.webm
 submission/*.zip
 submission/*_private*
+video/node_modules/
+video/*.mp4

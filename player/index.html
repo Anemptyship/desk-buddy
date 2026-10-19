@@ -1,8 +1,65 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Desk Buddy — Bricki</title></head>
-<body><div id="app"><header><a class="brand" href="./index.html">DESK BUDDY<span>Little presence. Real company.</span></a><div class="status"><i></i> Interactive prototype</div></header>
-<main><div class="stage"><canvas id="stage" width="1920" height="1080"></canvas><button id="start" class="start">Meet Bricki <span>Start the desk experience →</span></button></div>
-<section class="controls"><div><p class="eyebrow">YOUR 4 CM DESK COMPANION</p><h1>A little friend, on your actual desk.</h1><p>Walk, rest, explore — and get your attention when it matters.</p></div>
-<div class="actions"><button data-action="walk">1 · Walk</button><button data-action="sit">2 · Sit</button><button data-action="climb">3 · Climb cup</button><button data-action="message">4 · Message</button><button data-action="permission">5 · Permission</button><button data-action="urgent">6 · Urgent</button><button data-action="allow">Allow ↵</button><button data-action="later">Later ⌫</button></div>
-<div class="record"><button id="guided">Guided live demo</button><button id="record">Record live demo</button><button id="pause">Pause footage</button><button id="debug">Show surfaces · G</button><a id="download" hidden>Download recording</a><output id="state">Ready</output></div></section></main>
-<footer>Original Bricki design · Synchronized desk footage · Live 3D character animation</footer></div><script type="module" src="/src/main.ts"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Desk Buddy — Bricki</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <a class="brand" href="./index.html">DESK BUDDY<span>Your AI agent, on your actual desk.</span></a>
+      <div class="status"><i></i><span id="brain-status">Rules mode · add a Gemini key for Argon</span></div>
+    </header>
+    <main>
+      <div class="stage" id="stage">
+        <video id="plate" src="./scene/desk.mp4" muted playsinline loop preload="auto"></video>
+        <canvas id="layer"></canvas>
+        <div id="card" class="card" hidden>
+          <div class="card-meta"><span id="card-tier"></span><span id="card-by"></span></div>
+          <p id="card-title"></p>
+          <p id="card-line" class="line"></p>
+          <div id="card-actions" class="card-actions" hidden>
+            <button id="allow" class="primary">Allow <kbd>↵</kbd></button>
+            <button id="later">Later</button>
+          </div>
+        </div>
+        <button id="start" class="start">Meet Bricki <span>Start the desk experience →</span></button>
+      </div>
+
+      <section class="controls">
+        <div class="group">
+          <p class="eyebrow">Use the desk</p>
+          <div class="buttons">
+            <button data-visit="cupRim">1 · Climb the cup</button>
+            <button data-visit="capSeat">2 · Sit on the bottle cap</button>
+            <button data-visit="edgeSeat">3 · Sit on the MacBook</button>
+            <button data-visit="walletTop">4 · Stand on the wallet</button>
+            <button data-visit="bottleSide">5 · Visit the water bottle</button>
+          </div>
+        </div>
+        <div class="group">
+          <p class="eyebrow">Agent events</p>
+          <div class="buttons">
+            <button data-event="fyi">Q · Build finished</button>
+            <button data-event="needs_you">W · Send the recap?</button>
+            <button data-event="urgent">E · Standup in 1 min</button>
+            <button data-event="wellbeing">R · No water in 2 h</button>
+          </div>
+          <form id="custom" class="custom">
+            <input id="custom-text" placeholder="Type any agent event, e.g. “Deploy failed on prod”" autocomplete="off">
+            <button type="submit">Send</button>
+          </form>
+        </div>
+        <div class="group row">
+          <label class="key">Gemini API key <input id="api-key" type="password" placeholder="kept in this tab only" autocomplete="off"></label>
+          <button id="debug">Desk map · G</button>
+          <output id="state">Ready</output>
+        </div>
+      </section>
+    </main>
+    <footer>Original Bricki design · Tracked desk footage · Live 3D character · Decisions by Gemini 4 Argon when a key is set</footer>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
